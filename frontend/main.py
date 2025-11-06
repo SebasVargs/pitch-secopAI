@@ -387,8 +387,19 @@ def mode_selection_page():
             st.rerun()
         
         st.markdown("""
-            <p style="text-align: center; color: #666; margin: 0.5rem 0;">
+            <p style="text-align: center; color: #666; margin: 0.5rem 0 2rem 0;">
                 Busca y consulta documentos PDF directamente
+            </p>
+        """, unsafe_allow_html=True)
+        
+        # Botón Gestión Personalizada
+        if st.button("📋 Gestión Personalizada", key="btn_gestion", use_container_width=True):
+            st.session_state.selected_mode = 'gestion'
+            st.rerun()
+        
+        st.markdown("""
+            <p style="text-align: center; color: #666; margin: 0.5rem 0;">
+                Gestiona documentos y recordatorios de vencimiento
             </p>
         """, unsafe_allow_html=True)
         
@@ -813,6 +824,286 @@ def buscador_page():
             st.rerun()
 
 # ============================================
+# FUNCIÓN DE GESTIÓN PERSONALIZADA
+# ============================================
+
+def gestion_personalizada_page():
+    """Página de gestión personalizada de documentos con recordatorios"""
+    
+    # Inicializar estado de documentos si no existe
+    if 'documentos_gestion' not in st.session_state:
+        st.session_state.documentos_gestion = []
+    
+    # Navbar profesional
+    st.markdown(f"""
+        <div style="
+            background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        ">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="
+                    background: white;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                ">👤</div>
+                <div style="display: flex; flex-direction: column;">
+                    <div style="color: white; font-weight: 600; font-size: 1rem;">{st.session_state.username}</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="color: #bdc3c7; font-size: 0.85rem;">Modo: Gestión Personalizada</span>
+                    </div>
+                </div>
+            </div>
+            <div style="color: white; font-size: 0.9rem;">
+                <button onclick="window.location.reload();" style="
+                    background-color: #e74c3c;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 4px 10px;
+                    font-size: 0.8rem;
+                    cursor: pointer;
+                ">
+                Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Título principal
+    st.markdown("""
+        <div class="professional-header">
+            <h1 style="font-size: 2rem; margin: 0;">📋 Gestión Personalizada de Documentos</h1>
+            <p style="font-size: 0.9rem; margin: 0;">Administra tus documentos y recibe recordatorios de vencimiento</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Tabs para agregar documento y ver documentos
+    tab1, tab2 = st.tabs(["➕ Agregar Documento", "📂 Mis Documentos"])
+    
+    # ============================================
+    # TAB 1: AGREGAR DOCUMENTO
+    # ============================================
+    with tab1:
+        st.markdown("### Registrar Nuevo Documento")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        with st.form(key="form_agregar_documento", clear_on_submit=True):
+            # Tipo de documento
+            tipo_documento = st.selectbox(
+                "Tipo de Documento *",
+                [
+                    "Seleccionar...",
+                    "Pliego de Condiciones",
+                    "Documento de Contratación",
+                    "Contrato",
+                    "Acta de Inicio",
+                    "Acta de Liquidación",
+                    "Informe de Supervisión",
+                    "Certificado de Disponibilidad Presupuestal (CDP)",
+                    "Registro Presupuestal (RP)",
+                    "Póliza",
+                    "Otro"
+                ]
+            )
+            
+            # Nombre del documento
+            nombre_documento = st.text_input(
+                "Nombre del Documento *",
+                placeholder="Ej: Pliego Licitación Pública 001-2024"
+            )
+            
+            # Número de contrato o referencia
+            numero_referencia = st.text_input(
+                "Número de Contrato/Referencia",
+                placeholder="Ej: LP-001-2024"
+            )
+            
+            # Entidad contratante
+            entidad = st.text_input(
+                "Entidad Contratante",
+                placeholder="Ej: Alcaldía Municipal"
+            )
+            
+            # Fecha de vencimiento
+            col1, col2 = st.columns(2)
+            with col1:
+                fecha_vencimiento = st.date_input(
+                    "Fecha de Vencimiento *",
+                    min_value=datetime.now().date()
+                )
+            with col2:
+                dias_alerta = st.number_input(
+                    "Días de Alerta Anticipada",
+                    min_value=1,
+                    max_value=90,
+                    value=7,
+                    help="Días antes del vencimiento para recibir alerta"
+                )
+            
+            # Valor del contrato (opcional)
+            valor_contrato = st.number_input(
+                "Valor del Contrato (COP)",
+                min_value=0,
+                value=0,
+                step=1000000,
+                help="Opcional"
+            )
+            
+            # Observaciones
+            observaciones = st.text_area(
+                "Observaciones",
+                placeholder="Notas adicionales sobre el documento...",
+                height=100
+            )
+            
+            # Archivo
+            archivo = st.file_uploader(
+                "Adjuntar Archivo (PDF, Word, Excel)",
+                type=["pdf", "docx", "xlsx", "doc", "xls"],
+                help="Opcional: Sube el documento relacionado"
+            )
+            
+            # Botón de envío
+            col1, col2, col3 = st.columns([2, 2, 2])
+            with col2:
+                submit = st.form_submit_button("Guardar Documento", use_container_width=True)
+            
+            if submit:
+                if tipo_documento == "Seleccionar...":
+                    st.error("❌ Debes seleccionar un tipo de documento")
+                elif not nombre_documento.strip():
+                    st.error("❌ El nombre del documento es obligatorio")
+                else:
+                    # Crear documento
+                    nuevo_documento = {
+                        "id": len(st.session_state.documentos_gestion) + 1,
+                        "tipo": tipo_documento,
+                        "nombre": nombre_documento,
+                        "referencia": numero_referencia,
+                        "entidad": entidad,
+                        "fecha_vencimiento": fecha_vencimiento,
+                        "dias_alerta": dias_alerta,
+                        "valor": valor_contrato,
+                        "observaciones": observaciones,
+                        "archivo_nombre": archivo.name if archivo else None,
+                        "fecha_registro": datetime.now().date(),
+                        "estado": "Activo"
+                    }
+                    
+                    # Guardar archivo si existe (simulado)
+                    if archivo:
+                        # En producción, aquí guardarías el archivo en el servidor
+                        pass
+                    
+                    st.session_state.documentos_gestion.append(nuevo_documento)
+                    st.success(f"✅ Documento '{nombre_documento}' registrado exitosamente")
+                    st.rerun()
+    
+    # ============================================
+    # TAB 2: MIS DOCUMENTOS
+    # ============================================
+    with tab2:
+        st.markdown("### Documentos Registrados")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if not st.session_state.documentos_gestion:
+            st.info("📭 No hay documentos registrados. Agrega tu primer documento en la pestaña anterior.")
+        else:
+            # Calcular alertas
+            hoy = datetime.now().date()
+            documentos_vencidos = []
+            documentos_por_vencer = []
+            documentos_vigentes = []
+            
+            for doc in st.session_state.documentos_gestion:
+                dias_restantes = (doc['fecha_vencimiento'] - hoy).days
+                
+                if dias_restantes < 0:
+                    documentos_vencidos.append(doc)
+                elif dias_restantes <= doc['dias_alerta']:
+                    documentos_por_vencer.append(doc)
+                else:
+                    documentos_vigentes.append(doc)
+            
+            # Mostrar alertas
+            if documentos_vencidos:
+                st.error(f"🚨 **{len(documentos_vencidos)} documento(s) vencido(s)**")
+            
+            if documentos_por_vencer:
+                st.warning(f"⚠️ **{len(documentos_por_vencer)} documento(s) próximo(s) a vencer**")
+            
+            # Mostrar resumen
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Documentos", len(st.session_state.documentos_gestion))
+            with col2:
+                st.metric("Por Vencer", len(documentos_por_vencer), delta=f"-{len(documentos_por_vencer)}", delta_color="inverse")
+            with col3:
+                st.metric("Vencidos", len(documentos_vencidos), delta=f"-{len(documentos_vencidos)}", delta_color="inverse")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Mostrar documentos
+            for doc in st.session_state.documentos_gestion:
+                dias_restantes = (doc['fecha_vencimiento'] - hoy).days
+                
+                # Determinar color de alerta
+                if dias_restantes < 0:
+                    color_borde = "#e74c3c"  # Rojo
+                    icono = "🚨"
+                    estado_texto = f"VENCIDO hace {abs(dias_restantes)} días"
+                elif dias_restantes <= doc['dias_alerta']:
+                    color_borde = "#f39c12"  # Naranja
+                    icono = "⚠️"
+                    estado_texto = f"Vence en {dias_restantes} días"
+                else:
+                    color_borde = "#27ae60"  # Verde
+                    icono = "✅"
+                    estado_texto = f"Vigente ({dias_restantes} días restantes)"
+                
+                with st.expander(f"{icono} {doc['nombre']} - {estado_texto}", expanded=False):
+                    st.markdown(f"""
+                        <div style="border-left: 4px solid {color_borde}; padding-left: 1rem; margin-bottom: 1rem;">
+                            <p><strong>Tipo:</strong> {doc['tipo']}</p>
+                            <p><strong>Referencia:</strong> {doc['referencia'] or 'N/A'}</p>
+                            <p><strong>Entidad:</strong> {doc['entidad'] or 'N/A'}</p>
+                            <p><strong>Fecha de Vencimiento:</strong> {doc['fecha_vencimiento'].strftime('%d/%m/%Y')}</p>
+                            <p><strong>Fecha de Registro:</strong> {doc['fecha_registro'].strftime('%d/%m/%Y')}</p>
+                            <p><strong>Valor:</strong> ${doc['valor']:,.0f} COP</p>
+                            <p><strong>Observaciones:</strong> {doc['observaciones'] or 'Sin observaciones'}</p>
+                            {f"<p><strong>Archivo:</strong> {doc['archivo_nombre']}</p>" if doc['archivo_nombre'] else ""}
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Botón para eliminar
+                    if st.button(f"🗑️ Eliminar", key=f"delete_{doc['id']}"):
+                        st.session_state.documentos_gestion = [d for d in st.session_state.documentos_gestion if d['id'] != doc['id']]
+                        st.success("Documento eliminado")
+                        st.rerun()
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Botón para volver
+    col1, col2, col3 = st.columns([2, 4, 2])
+    with col2:
+        if st.button("Volver", key="back_to_mode_gestion"):
+            st.session_state.selected_mode = None
+            st.rerun()
+
+# ============================================
 # LÓGICA PRINCIPAL
 # ============================================
 
@@ -824,3 +1115,5 @@ elif st.session_state.selected_mode == 'chatbot':
     chat_page()
 elif st.session_state.selected_mode == 'buscador':
     buscador_page()
+elif st.session_state.selected_mode == 'gestion':
+    gestion_personalizada_page()
