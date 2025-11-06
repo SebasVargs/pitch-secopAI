@@ -392,30 +392,20 @@ def chat_page():
                 </div>
             </div>
             <div style="color: white; font-size: 0.9rem;">
-                <form action="#" method="post">
-                    <button name="logout" type="submit" style="
-                        background-color: #e74c3c;
-                        color: white;
-                        border: none;
-                        border-radius: 5px;
-                        padding: 4px 10px;
-                        font-size: 0.8rem;
-                        cursor: pointer;
-                    ">
-                    Cerrar Sesión
-                    </button>
-                </form>            
+                <button onclick="window.location.reload();" style="
+                    background-color: #e74c3c;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 4px 10px;
+                    font-size: 0.8rem;
+                    cursor: pointer;
+                ">
+                Cerrar Sesión
+                </button>
             </div>
         </div>
     """, unsafe_allow_html=True)
-
-    # Detectar clic del botón
-    logout = st.session_state.get("logout_trigger", False)
-
-    # Simular detección del botón HTML (ya que Streamlit no detecta botones HTML directamente)
-    # Se puede reemplazar por un st.button visualmente oculto si se desea capturar el evento.
-    if "logout_trigger" not in st.session_state:
-        st.session_state.logout_trigger = False
     
     # Título principal
     st.markdown("""
@@ -513,14 +503,14 @@ def chat_page():
     if st.session_state.model_trained:
         with st.form(key="chat_form", clear_on_submit=True):
             user_input = st.text_input(
-                "💬 Escribe tu pregunta aquí...",
+                "Escribe tu consulta aquí...",
                 placeholder="Ejemplo: ¿Qué dice la Ley 80 de 1993 sobre contratos públicos?",
                 key="user_message_input"
             )
             
             col1, col2, col3 = st.columns([2, 1, 2])
             with col2:
-                submit = st.form_submit_button("📤 Enviar", use_container_width=True)
+                submit = st.form_submit_button("Enviar", use_container_width=True)
             
             if submit and user_input.strip():
                 with st.spinner("🤔 Analizando tu pregunta..."):
