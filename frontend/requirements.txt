@@ -1,0 +1,17 @@
+# ============================================
+# FRONTEND REQUIREMENTS - SECOP Chatbot
+# ============================================
+
+# ----- Web Framework -----
+streamlit==1.28.1               # Framework para crear apps web interactivas
+
+# ----- HTTP Client -----
+requests==2.31.0                # Cliente HTTP para llamar a la API
+markdown==3.5.1                # Rendering formatted responses
+
+# ----- Data Visualization (Opcional) -----
+plotly==5.18.0                  # Gráficos interactivos
+pandas==2.1.3                   # Manipulación de datos (si es necesario)
+
+# ----- Utilities -----
+python-dotenv==1.0.0            # Variables de entorno

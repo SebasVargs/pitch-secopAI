@@ -1,0 +1,14 @@
+# ============================================
+# BACKEND REQUIREMENTS - SECOP Chatbot
+# ============================================
+
+# ----- Web Framework -----
+flask==3.0.0                    # Framework web
+flask-cors==4.0.0               # CORS support
+
+# ----- AI & LLM -----
+groq==0.33.0                    # Groq API para LLM
+
+# ----- Utilities -----
+python-dotenv==1.0.0            # Variables de entorno
+requests==2.31.0                # HTTP requests
