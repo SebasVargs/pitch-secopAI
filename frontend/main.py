@@ -320,14 +320,6 @@ def login_page():
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Opción oculta para mostrar confianza
-        with st.expander("⚙️ Opciones Avanzadas"):
-            show_conf = st.checkbox("Mostrar porcentaje de confianza en respuestas", value=st.session_state.show_confidence)
-            if show_conf != st.session_state.show_confidence:
-                st.session_state.show_confidence = show_conf
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        
         # Formulario de login
         with st.form("login_form"):
             username = st.text_input("Usuario", placeholder="Ingresa tu usuario")
