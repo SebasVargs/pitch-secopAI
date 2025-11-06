@@ -10,10 +10,10 @@ if __name__ == '__main__':
     debug = os.environ.get('FLASK_DEBUG', 'True').lower() == 'true'
     
     print("\n" + "="*50)
-    print("🤖 SECOP Chatbot API")
+    print("SECOP Chatbot API")
     print("="*50)
-    print(f"🌐 Servidor: http://127.0.0.1:{port}")
-    print(f"🚀 Entorno: {'DEBUG' if debug else 'PRODUCTION'}")
+    print(f"Servidor: http://127.0.0.1:{port}")
+    print(f"Entorno: {'DEBUG' if debug else 'PRODUCTION'}")
     print("="*50 + "\n")
     
     app.run(debug=debug, port=int(port), host='127.0.0.1')

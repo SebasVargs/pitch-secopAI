@@ -1,7 +1,3 @@
-# ============================================
-# FRONTEND REQUIREMENTS - SECOP Chatbot
-# ============================================
-
 # ----- Web Framework -----
 streamlit==1.28.1               # Framework para crear apps web interactivas
 

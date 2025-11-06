@@ -190,6 +190,9 @@ if 'model_trained' not in st.session_state:
 if 'show_confidence' not in st.session_state:
     st.session_state.show_confidence = False
 
+if 'selected_mode' not in st.session_state:
+    st.session_state.selected_mode = None  # 'chatbot' o 'buscador'
+
 # ============================================
 # FUNCIONES DE UTILIDAD
 # ============================================
@@ -347,6 +350,57 @@ def login_page():
         """, unsafe_allow_html=True)
 
 # ============================================
+# FUNCIÓN DE SELECCIÓN DE MODO
+# ============================================
+
+def mode_selection_page():
+    """Página para seleccionar entre Chatbot y Buscador"""
+    
+    st.markdown("""
+        <div class="professional-header" style="text-align: center; margin-bottom: 3rem;">
+            <h1 style="font-size: 2.5rem; margin: 0;">Bienvenido, {}</h1>
+            <p style="font-size: 1rem; margin-top: 0.5rem;">Selecciona el modo que deseas usar</p>
+        </div>
+    """.format(st.session_state.username), unsafe_allow_html=True)
+    
+    # Dos botones grandes
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        
+        # Botón Chatbot
+        if st.button("GovAI Chatbot", key="btn_chatbot", use_container_width=True):
+            st.session_state.selected_mode = 'chatbot'
+            st.rerun()
+        
+        st.markdown("""
+            <p style="text-align: center; color: #666; margin: 0.5rem 0 2rem 0;">
+                Conversa con GovAI sobre contratación pública
+            </p>
+        """, unsafe_allow_html=True)
+        
+        # Botón Buscador
+        if st.button("Buscador de Documentos", key="btn_buscador", use_container_width=True):
+            st.session_state.selected_mode = 'buscador'
+            st.rerun()
+        
+        st.markdown("""
+            <p style="text-align: center; color: #666; margin: 0.5rem 0;">
+                Busca y consulta documentos PDF directamente
+            </p>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # Botón de cerrar sesión
+        if st.button("Cerrar Sesión", key="logout_mode_selection"):
+            st.session_state.authenticated = False
+            st.session_state.username = None
+            st.session_state.selected_mode = None
+            st.session_state.chat_history = []
+            st.rerun()
+
+# ============================================
 # FUNCIÓN DE CHAT
 # ============================================
 
@@ -398,6 +452,13 @@ def chat_page():
             </div>
         </div>
     """, unsafe_allow_html=True)
+    
+    # Botón para volver a selección de modo
+    col1, col2, col3 = st.columns([2, 4, 2])
+    with col2:
+        if st.button("Volver", key="back_to_mode_chat"):
+            st.session_state.selected_mode = None
+            st.rerun()
     
     # Título principal
     st.markdown("""
@@ -523,7 +584,113 @@ def chat_page():
     else:
         st.warning("⚠️ El modelo debe estar entrenado para hacer consultas")
 
+# ============================================
+# FUNCIÓN DE BUSCADOR
+# ============================================
 
+def buscador_page():
+    """Página del buscador de documentos PDF"""
+    
+    # Navbar profesional
+    st.markdown(f"""
+        <div style="
+            background: linear-gradient(90deg, #2c3e50 0%, #34495e 100%);
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        ">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="
+                    background: white;
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1.2rem;
+                ">👤</div>
+                <div style="display: flex; flex-direction: column;">
+                    <div style="color: white; font-weight: 600; font-size: 1rem;">{st.session_state.username}</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="color: #bdc3c7; font-size: 0.85rem;">Modo: Buscador</span>
+                    </div>
+                </div>
+            </div>
+            <div style="color: white; font-size: 0.9rem;">
+                <button onclick="window.location.reload();" style="
+                    background-color: #e74c3c;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 4px 10px;
+                    font-size: 0.8rem;
+                    cursor: pointer;
+                ">
+                Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    # Título principal
+    st.markdown("""
+        <div class="professional-header">
+            <h1 style="font-size: 2rem; margin: 0;">📄 Buscador de Documentos</h1>
+            <p style="font-size: 0.9rem; margin: 0;">Consulta documentos PDF del sistema SECOP</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Obtener lista de documentos del backend
+    try:
+        response = requests.get(f"{API_URL}/api/documents", timeout=5)
+        if response.status_code == 200:
+            documents = response.json()
+            
+            if documents:
+                st.markdown("""
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                        <p style="margin: 0; color: #2c3e50;">
+                            <strong>📚 Documentos disponibles:</strong> {} archivos
+                        </p>
+                    </div>
+                """.format(len(documents)), unsafe_allow_html=True)
+                
+                # Mostrar cada documento
+                for idx, doc in enumerate(documents):
+                    with st.expander(f"📄 {doc['title']}", expanded=False):
+                        st.markdown(f"""
+                            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                                <p style="color: #666; line-height: 1.6;">
+                                    {doc['preview']}
+                                </p>
+                            </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Botón para ver documento completo (placeholder por ahora)
+                        if st.button(f"Ver documento completo", key=f"view_doc_{idx}"):
+                            st.info("🔜 Funcionalidad de visualización de PDF en desarrollo")
+            else:
+                st.warning("⚠️ No hay documentos disponibles")
+        else:
+            st.error("❌ Error al obtener documentos del backend")
+    except Exception as e:
+        st.error(f"❌ Error de conexión: {str(e)}")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Botón para volver a selección de modo
+    col1, col2, col3 = st.columns([2, 4, 2])
+    with col2:
+        if st.button("Volver", key="back_to_mode"):
+            st.session_state.selected_mode = None
+            st.rerun()
 
 # ============================================
 # LÓGICA PRINCIPAL
@@ -531,5 +698,9 @@ def chat_page():
 
 if not st.session_state.authenticated:
     login_page()
-else:
+elif st.session_state.selected_mode is None:
+    mode_selection_page()
+elif st.session_state.selected_mode == 'chatbot':
     chat_page()
+elif st.session_state.selected_mode == 'buscador':
+    buscador_page()
