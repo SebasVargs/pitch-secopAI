@@ -7,7 +7,7 @@ markdown==3.5.1                # Rendering formatted responses
 
 # ----- Data Visualization (Opcional) -----
 plotly==5.18.0                  # Gráficos interactivos
-pandas==2.1.3                   # Manipulación de datos (si es necesario)
+pandas>=2.2.0                   # Manipulación de datos (compatible con Python 3.13)
 
 # ----- Utilities -----
 python-dotenv==1.0.0            # Variables de entorno

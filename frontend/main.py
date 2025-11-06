@@ -8,6 +8,8 @@ import requests
 import time
 from datetime import datetime
 import re
+import pandas as pd
+import os
 
 # ============================================
 # CONFIGURACIÓN
@@ -43,7 +45,7 @@ st.markdown("""
     
     /* Estilos generales */
     .main {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: white;
     }
     
     /* Login container */
@@ -380,7 +382,7 @@ def mode_selection_page():
         """, unsafe_allow_html=True)
         
         # Botón Buscador
-        if st.button("Buscador de Documentos", key="btn_buscador", use_container_width=True):
+        if st.button("Buscador SECOP", key="btn_buscador", use_container_width=True):
             st.session_state.selected_mode = 'buscador'
             st.rerun()
         
@@ -589,7 +591,7 @@ def chat_page():
 # ============================================
 
 def buscador_page():
-    """Página del buscador de documentos PDF"""
+    """Página del buscador de documentos PDF y entidades"""
     
     # Navbar profesional
     st.markdown(f"""
@@ -640,48 +642,166 @@ def buscador_page():
     # Título principal
     st.markdown("""
         <div class="professional-header">
-            <h1 style="font-size: 2rem; margin: 0;">📄 Buscador de Documentos</h1>
-            <p style="font-size: 0.9rem; margin: 0;">Consulta documentos PDF del sistema SECOP</p>
+            <h1 style="font-size: 2rem; margin: 0;">🔍 Buscador SECOP</h1>
+            <p style="font-size: 0.9rem; margin: 0;">Consulta documentos y entidades del sistema SECOP</p>
         </div>
     """, unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Obtener lista de documentos del backend
-    try:
-        response = requests.get(f"{API_URL}/api/documents", timeout=5)
-        if response.status_code == 200:
-            documents = response.json()
-            
-            if documents:
-                st.markdown("""
-                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
-                        <p style="margin: 0; color: #2c3e50;">
-                            <strong>📚 Documentos disponibles:</strong> {} archivos
-                        </p>
-                    </div>
-                """.format(len(documents)), unsafe_allow_html=True)
+    # Tabs para documentos y entidades
+    tab1, tab2 = st.tabs(["📄 Documentos", "🏢 Entidades"])
+    
+    # ============================================
+    # TAB 1: DOCUMENTOS
+    # ============================================
+    with tab1:
+        st.markdown("### Buscar Documentos PDF")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Obtener lista de documentos del backend
+        try:
+            response = requests.get(f"{API_URL}/api/documents", timeout=5)
+            if response.status_code == 200:
+                documents = response.json()
                 
-                # Mostrar cada documento
-                for idx, doc in enumerate(documents):
-                    with st.expander(f"📄 {doc['title']}", expanded=False):
-                        st.markdown(f"""
-                            <div style="background: white; padding: 1rem; border-radius: 8px;">
-                                <p style="color: #666; line-height: 1.6;">
-                                    {doc['preview']}
-                                </p>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Botón para ver documento completo (placeholder por ahora)
-                        if st.button(f"Ver documento completo", key=f"view_doc_{idx}"):
-                            st.info("🔜 Funcionalidad de visualización de PDF en desarrollo")
+                if documents:
+                    st.markdown("""
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                            <p style="margin: 0; color: #2c3e50;">
+                                <strong>📚 Documentos disponibles:</strong> {} archivos
+                            </p>
+                        </div>
+                    """.format(len(documents)), unsafe_allow_html=True)
+                    
+                    # Mostrar cada documento
+                    for idx, doc in enumerate(documents):
+                        with st.expander(f"📄 {doc['title']}", expanded=False):
+                            st.markdown(f"""
+                                <div style="background: white; padding: 1rem; border-radius: 8px;">
+                                    <p style="color: #666; line-height: 1.6;">
+                                        {doc['preview']}
+                                    </p>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            
+                            # Botón para ver documento completo (placeholder por ahora)
+                            if st.button(f"Ver documento completo", key=f"view_doc_{idx}"):
+                                st.info("🔜 Funcionalidad de visualización de PDF en desarrollo")
+                else:
+                    st.warning("⚠️ No hay documentos disponibles")
             else:
-                st.warning("⚠️ No hay documentos disponibles")
-        else:
-            st.error("❌ Error al obtener documentos del backend")
-    except Exception as e:
-        st.error(f"❌ Error de conexión: {str(e)}")
+                st.error("❌ Error al obtener documentos del backend")
+        except Exception as e:
+            st.error(f"❌ Error de conexión: {str(e)}")
+    
+    # ============================================
+    # TAB 2: ENTIDADES
+    # ============================================
+    with tab2:
+        st.markdown("### Buscar Entidades SECOP")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Leer CSV de entidades
+        csv_path = os.path.join(os.path.dirname(__file__), "..", "backend", "data", "secop", "secop_sintetico_258.csv")
+        
+        try:
+            # Leer el CSV
+            df_entidades = pd.read_csv(csv_path)
+            
+            # Inicializar estado de paginación si no existe
+            if 'entidades_page' not in st.session_state:
+                st.session_state.entidades_page = 0
+            
+            # Configuración de paginación
+            items_per_page = 10
+            total_items = len(df_entidades)
+            total_pages = (total_items - 1) // items_per_page + 1
+            
+            # Calcular índices para la página actual
+            start_idx = st.session_state.entidades_page * items_per_page
+            end_idx = min(start_idx + items_per_page, total_items)
+            
+            # Mostrar datos de la página actual
+            df_page = df_entidades.iloc[start_idx:end_idx]
+            
+            # Mostrar tabla con estilo
+            st.dataframe(
+                df_page,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "NIT": st.column_config.TextColumn(
+                        "NIT",
+                        width="medium",
+                    ),
+                    "nombre": st.column_config.TextColumn(
+                        "Nombre",
+                        width="large",
+                    ),
+                    "usuarios": st.column_config.NumberColumn(
+                        "Usuarios",
+                        width="small",
+                    ),
+                }
+            )
+
+            # Controles de paginación
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Estilos CSS específicos para los botones de paginación
+            st.markdown("""
+                <style>
+                    /* Estilos para botones de paginación */
+                    div[data-testid="column"] button[kind="secondary"] {
+                        font-size: 0.75rem !important;
+                        padding: 0.25rem 0.5rem !important;
+                        height: auto !important;
+                        min-height: 2rem !important;
+                    }
+                    div[data-testid="column"] button[kind="secondary"] p {
+                        font-size: 0.75rem !important;
+                    }
+                </style>
+            """, unsafe_allow_html=True)
+            
+            col1, col2, col3, col4, col5 = st.columns([1, 1, 2, 1, 1])
+            
+            with col1:
+                if st.button("Primera", disabled=(st.session_state.entidades_page == 0), key="btn_primera"):
+                    st.session_state.entidades_page = 0
+                    st.rerun()
+            
+            with col2:
+                if st.button("Anterior", disabled=(st.session_state.entidades_page == 0), key="btn_anterior"):
+                    st.session_state.entidades_page -= 1
+                    st.rerun()
+            
+            with col3:
+                st.markdown(f"""
+                    <div style="text-align: center; padding: 0.5rem;">
+                        <strong>Página {st.session_state.entidades_page + 1} de {total_pages}</strong>
+                        <br>
+                        <span style="color: #666; font-size: 0.9rem;">
+                            Mostrando {start_idx + 1}-{end_idx} de {total_items}
+                        </span>
+                    </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                if st.button("Siguiente", disabled=(st.session_state.entidades_page >= total_pages - 1), key="btn_siguiente"):
+                    st.session_state.entidades_page += 1
+                    st.rerun()
+            
+            with col5:
+                if st.button("Última", disabled=(st.session_state.entidades_page >= total_pages - 1), key="btn_ultima"):
+                    st.session_state.entidades_page = total_pages - 1
+                    st.rerun()
+                    
+        except FileNotFoundError:
+            st.error("❌ No se encontró el archivo de entidades")
+        except Exception as e:
+            st.error(f"❌ Error al cargar entidades: {str(e)}")
 
     st.markdown("<br>", unsafe_allow_html=True)
     
